@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { initSocket } from "./config/socket.js";
+import cors from "cors";
 import db from "./config/db.js";
 
 
@@ -13,12 +15,12 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*", // Настрой в зависимости от фронта
-        methods: ["GET", "POST"]
-    }
-});
+const io = initSocket(server);
+
+app.use(cors({
+  origin: "*",
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use("/api/auth", userRoutes);
@@ -34,13 +36,35 @@ app.get("/", async (req, res) => {
   }
 });
 
-io.on('connection', (socket) => {
-    console.log("User connected:", socket.id);
-    socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
-        
-    });
-    
+io.on("connection", (socket) => {
+  console.log(`🟢 Пользователь подключился: ${socket.id}`);
+
+  // Пользователь присоединяется к комнате чата
+  socket.on("joinChat", (chatId) => {
+      socket.join(`chat_${chatId}`);
+      console.log(`👤 Пользователь ${socket.id} зашел в чат ${chatId}`);
+  });
+
+  // Получаем и отправляем сообщения
+  socket.on("sendMessage", async (data) => {
+      const { chatId, senderId, content } = data;
+
+      // Сохраняем сообщение в БД
+      const message = await db("messages").insert({
+          chat_id: chatId,
+          sender_id: senderId,
+          content,
+      }).returning("*");
+
+      // Отправляем сообщение всем в чате
+      io.to(`chat_${chatId}`).emit("newMessage", message[0]);
+      console.log(`📩 Сообщение отправлено в чат ${chatId}`);
+  });
+
+  // Отключение пользователя
+  socket.on("disconnect", () => {
+      console.log(`🔴 Пользователь отключился: ${socket.id}`);
+  });
 });
 
 const PORT = process.env.PORT || 5000;

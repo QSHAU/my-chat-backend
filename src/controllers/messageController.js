@@ -20,7 +20,7 @@ export const sendMessage = async (req, res) => {
             sender_id,
             content,
         });
-
+        
         io.to(`chat_${chat_id}`).emit("newMessage", message);
 
         return res.status(201).json(message);
@@ -35,7 +35,12 @@ export const getMessages = async (req, res) => {
 
         const messages = await Message.query()
             .where("chat_id", chatId)
-            .withGraphFetched("sender");
+            .withGraphFetched("sender(selectSafe)")
+            .modifiers({
+                selectSafe(builder) {
+                  builder.select('users.id', 'users.username'); // возвращать только безопасные поля
+                }
+              })
 
         return res.json(messages);
     } catch (error) {

@@ -1,4 +1,4 @@
-exports.up = function(knex) {
+export const up = function(knex) {
     return knex.schema.createTable("messages", (table) => {
         table.increments("id").primary();
         table.integer("chat_id").unsigned().references("id").inTable("chats").onDelete("CASCADE");
@@ -8,6 +8,6 @@ exports.up = function(knex) {
     });
 };
 
-exports.down = function(knex) {
+export const down = function(knex) {
     return knex.schema.dropTable("messages");
 };
