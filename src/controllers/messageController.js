@@ -19,8 +19,9 @@ export const sendMessage = async (req, res) => {
             chat_id,
             sender_id,
             content,
+            created_at: new Date(),
         });
-        
+    
         io.to(`chat_${chat_id}`).emit("newMessage", message);
 
         return res.status(201).json(message);
@@ -49,3 +50,18 @@ export const getMessages = async (req, res) => {
             .json({ error: "Ошибка при получении сообщений" });
     }
 };
+
+export const markMessagesAsRead = async (req, res) => {
+    try {
+      const { chatId, userId } = req.body;
+  
+      await Message.query()
+        .where("chat_id", chatId)
+        .whereNot("sender_id", userId)
+        .update({ is_read: true });
+        
+      return res.status(200).json({ message: "Сообщения помечены как прочитанные" });
+    } catch (error) {
+      return res.status(500).json({ error: "Ошибка при обновлении статуса сообщений", details: error.message });
+    }
+  };

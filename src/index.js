@@ -1,7 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import { createServer } from "http";
-import { Server } from "socket.io";
 import { initSocket } from "./config/socket.js";
 import cors from "cors";
 import db from "./config/db.js";
@@ -43,22 +42,6 @@ io.on("connection", (socket) => {
   socket.on("joinChat", (chatId) => {
       socket.join(`chat_${chatId}`);
       console.log(`👤 Пользователь ${socket.id} зашел в чат ${chatId}`);
-  });
-
-  // Получаем и отправляем сообщения
-  socket.on("sendMessage", async (data) => {
-      const { chatId, senderId, content } = data;
-
-      // Сохраняем сообщение в БД
-      const message = await db("messages").insert({
-          chat_id: chatId,
-          sender_id: senderId,
-          content,
-      }).returning("*");
-
-      // Отправляем сообщение всем в чате
-      io.to(`chat_${chatId}`).emit("newMessage", message[0]);
-      console.log(`📩 Сообщение отправлено в чат ${chatId}`);
   });
 
   // Отключение пользователя

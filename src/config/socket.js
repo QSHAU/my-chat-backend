@@ -17,6 +17,11 @@ export const initSocket = (server) => {
             socket.join(`chat_${chatId}`);
         });
 
+        socket.on("leaveChat", (chatId) => {
+            socket.leave(`chat_${chatId}`);
+            console.log(`Пользователь ${socket.id} покинул комнату chat_${chatId}`);
+        });
+
         socket.on("disconnect", () => {
             console.log("Клиент отключился:", socket.id);
         });
