@@ -15,7 +15,6 @@ const generateRefreshToken = (user) => {
     });
 };
 
-// Регистрация пользователя
 export const create = async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -198,7 +197,7 @@ export const searchUser = async (req, res) => {
         if (!query) return res.json([]);
 
         const users = await User.query()
-            .where("id", "!=", userId) // Исключаем себя
+            .where("id", "!=", userId)
             .andWhere((qb) => {
                 qb.where("username", "like", `%${query}%`)
                   .orWhere("email", "like", `%${query}%`);

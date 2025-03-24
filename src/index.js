@@ -9,12 +9,13 @@ import db from "./config/db.js";
 import userRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 
 dotenv.config();
 
 const app = express();
 const server = createServer(app);
-const io = initSocket(server);
+initSocket(server);
 
 app.use(cors({
   origin: "*",
@@ -25,6 +26,8 @@ app.use(express.json());
 app.use("/api/auth", userRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/uploads", express.static("uploads"));
 
 app.get("/", async (req, res) => {
   try {
@@ -33,21 +36,6 @@ app.get("/", async (req, res) => {
   } catch (error) {
     res.status(500).send("Database connection error");
   }
-});
-
-io.on("connection", (socket) => {
-  console.log(`🟢 Пользователь подключился: ${socket.id}`);
-
-  // Пользователь присоединяется к комнате чата
-  socket.on("joinChat", (chatId) => {
-      socket.join(`chat_${chatId}`);
-      console.log(`👤 Пользователь ${socket.id} зашел в чат ${chatId}`);
-  });
-
-  // Отключение пользователя
-  socket.on("disconnect", () => {
-      console.log(`🔴 Пользователь отключился: ${socket.id}`);
-  });
 });
 
 const PORT = process.env.PORT || 5000;
